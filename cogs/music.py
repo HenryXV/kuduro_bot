@@ -62,18 +62,20 @@ class Music(commands.Cog):
 
     @commands.command(name='join', help='Conecta o bot no canal de voz que você está')
     async def join(self, ctx):
-        channel = ctx.message.author.voice.channel
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
 
-        if not channel:
-            await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+        if voice and voice.is_connected():
+            await voice.move_to(channel)
         else:
-            if voice and voice.is_connected():
-                await voice.move_to(channel)
-            else:
-                voice = await channel.connect()
+            voice = await channel.connect()
 
-    @commands.command(name='play', help='Toca o aúdio de vídeos do youtube no canal de voz que o usuário está')
+    @commands.command(name='play', help='Toca o aúdio de vídeos do youtube no canal de voz que o usuário está', aliases=['p'])
     async def play_(self, ctx, *, search: str):
 
         await ctx.trigger_typing()
@@ -84,19 +86,35 @@ class Music(commands.Cog):
 
         # If download is True, source will be a discord.FFmpegPCMAudio with a VolumeTransformer.
         source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop, download=True)
+
+        player.title.append(source.title)
+        print(player.title)
+
         await player.songs.put(source)
 
     @commands.command(name='pula', help='Pula para a próxima música na fila')
     async def skip_(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_playing():
             voice.stop()
             await ctx.send('A música foi pulada', delete_after=10)
         else:
-            await ctx.send('Não há nenhum aúdio tocando', delete_after=10)
+            await ctx.send('Não há nenhum aúdio na fila', delete_after=10)
 
     @commands.command(name='pause', help='Pausa o aúdio sendo tocado no momento')
     async def pause(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_playing():
             voice.pause()
@@ -108,6 +126,12 @@ class Music(commands.Cog):
 
     @commands.command(name='resume', help='Resume o aúdio sendo tocado no momento')
     async def resume(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_paused():
             voice.resume()
@@ -119,19 +143,31 @@ class Music(commands.Cog):
 
     @commands.command(name='fila', help='Mostra as músicas que estão na fila', aliases=['f', 'playlist'])
     async def queue_info_(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
         player = self.get_player(ctx)
         if player.songs.empty():
             return await ctx.send('Não há nenhuma música na fila', delete_after=20)
 
-        upcoming = list(itertools.islice(player.songs._songs, 0, 5))
+        upcoming = list(itertools.islice(player.title, 1, 11))
 
-        fmt = '\n'.join(f'**`{_["title"]}`**' for _ in upcoming)
-        embed = discord.Embed(title=f'Upcoming - Next {len(upcoming)}', description=fmt)
+        fmt = '\n'.join([f'{i+1} - {item}' for i, item in enumerate(upcoming)])
+
+        embed = discord.Embed(title=f'Próximas {len(upcoming)} músicas', description=fmt)
 
         await ctx.send(embed=embed)
 
     @commands.command(name='tocando_agora', help='Mostra a música tocando no momento', aliases=['ta', 'atual', 'audioatual', 'tocando'])
     async def now_playing_(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
 
         voice_channel = ctx.voice_client
 
@@ -149,6 +185,11 @@ class Music(commands.Cog):
 
     @commands.command(name='volume', help='Muda o volume da música de valores entre 1 e 100', aliases=['vol'])
     async def change_volume_(self, ctx, *, vol: float):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
 
         voice_channel = ctx.voice_client
 

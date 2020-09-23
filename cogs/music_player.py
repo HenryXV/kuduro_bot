@@ -12,7 +12,7 @@ from youtube_dl import YoutubeDL
 
 class MusicPlayer():
 
-    __slots__ = ('bot', '_guild', '_channel', '_cog', 'songs', 'next_song', 'current', 'np', 'volume')
+    __slots__ = ('bot', '_guild', '_channel', '_cog', 'songs', 'next_song', 'title', 'current', 'np', 'volume')
 
     def __init__(self, ctx):
         self.bot = ctx.bot
@@ -22,6 +22,7 @@ class MusicPlayer():
 
         self.songs = asyncio.Queue()
         self.next_song = asyncio.Event()
+        self.title = list()
 
         self.np = None  # Now playing message
         self.volume = .5
@@ -61,6 +62,7 @@ class MusicPlayer():
             await self.next_song.wait()
 
             source.cleanup()
+            self.title.remove(source.title)
             self.current = None
 
             try:
