@@ -5,6 +5,7 @@ import asyncio
 import itertools
 import sys
 import traceback
+import heapq
 from cogs.music_player import MusicPlayer
 from ytdlsource import YTDLSource
 from async_timeout import timeout
@@ -75,6 +76,7 @@ class Music(commands.Cog):
         else:
             voice = await channel.connect()
 
+    @commands.max_concurrency(1, wait=True)
     @commands.command(name='play', help='Toca o aúdio de vídeos do youtube no canal de voz que o usuário está', aliases=['p'])
     async def play_(self, ctx, *, search: str):
 
@@ -88,11 +90,16 @@ class Music(commands.Cog):
         source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop, download=True)
 
         player.title.append(source.title)
-        print(player.title)
 
-        await player.songs.put(source)
 
-    @commands.command(name='pula', help='Pula para a próxima música na fila')
+        player.value = player.value + 1
+        player.pq.additem(source, player.value)
+        print(player.value)
+
+        await ctx.message.add_reaction('✅')
+        await ctx.send(f'```ini\n[Added {source.title} to the Queue]\n```', delete_after=30)
+
+    @commands.command(name='pula', help='Pula para a próxima música na fila', aliases=['skip'])
     async def skip_(self, ctx):
 
         try:
@@ -100,10 +107,12 @@ class Music(commands.Cog):
         except:
             return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
 
+        player = self.get_player(ctx)
+
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
-        if voice.is_playing():
+        if voice.is_playing() and len(player.pq) > 0:
             voice.stop()
-            await ctx.send('A música foi pulada', delete_after=10)
+            await ctx.message.add_reaction('✅')
         else:
             await ctx.send('Não há nenhum aúdio na fila', delete_after=10)
 
@@ -118,7 +127,7 @@ class Music(commands.Cog):
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_playing():
             voice.pause()
-            await ctx.send('O aúdio foi pausado')
+            await ctx.message.add_reaction('⏸️')
         elif voice.is_paused():
             await ctx.send('O aúdio já está pausado', delete_after=10)
         else:
@@ -135,7 +144,7 @@ class Music(commands.Cog):
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_paused():
             voice.resume()
-            await ctx.send('O aúdio foi retomado', delete_after=10)
+            await ctx.message.add_reaction('✅')
         elif voice.is_playing():
             await ctx.send('O aúdio não está pausado', delete_after=10)
         else:
@@ -150,10 +159,10 @@ class Music(commands.Cog):
             return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
 
         player = self.get_player(ctx)
-        if player.songs.empty():
+        if len(player.pq) == 0:
             return await ctx.send('Não há nenhuma música na fila', delete_after=20)
 
-        upcoming = list(itertools.islice(player.title, 1, 11))
+        upcoming = list(itertools.islice(player.title, 0, 50))
 
         fmt = '\n'.join([f'{i+1} - {item}' for i, item in enumerate(upcoming)])
 
@@ -181,7 +190,7 @@ class Music(commands.Cog):
         except discord.HTTPException:
             pass
 
-        player.np = await ctx.send('Tocando agora: {}'.format(voice_channel.source.title))
+        player.np = await ctx.send('Tocando agora: {a} - Pedido por: <@{b}>'.format(a=voice_channel.source.title, b=voice_channel.source.requester.id))
 
     @commands.command(name='volume', help='Muda o volume da música de valores entre 1 e 100', aliases=['vol'])
     async def change_volume_(self, ctx, *, vol: float):
@@ -209,6 +218,59 @@ class Music(commands.Cog):
     async def stop_(self, ctx):
 
         await self.cleanup(ctx.guild)
+
+        await ctx.message.add_reaction('⏹️')
+
+    @commands.command(name='remove', help="Remove o aúdio especificado pelo usuário", aliases=['re'])
+    async def remove_(self, ctx, index : int):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
+        player = self.get_player(ctx)
+
+        if index > 0 :
+            try:
+                await ctx.send('O aúdio {} foi removido da fila'.format(player.title[index-1]))
+
+                player.title.pop(index-1)
+                audio = [k for k,v in player.pq.items() if v == index]
+
+                del player.pq[audio[0]]
+            except IndexError:
+                return await ctx.send('O aúdio não está na fila', delete_after=10)
+        else:
+            return await ctx.send('O aúdio não está na fila', delete_after=10)
+
+        for k,v in player.pq.items():
+            if v > index and v > 1:
+                player.pq.updateitem(k, v-1)
+            else:
+                continue
+
+        await ctx.message.add_reaction('❌')
+
+        if player.value > 0:
+            player.value = player.value - 1
+        print(player.pq.values())
+
+    @commands.command(name='clear', help='Excluí todos os aúdios da fila')
+    async def clear_(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
+        player = self.get_player(ctx)
+
+        player.title.clear()
+        player.pq.clear()
+        player.value = 0
+
+        await ctx.send('Todas os aúdios da fila foram removidos', delete_after=5)
 
 def setup(bot):
     bot.add_cog(Music(bot))
