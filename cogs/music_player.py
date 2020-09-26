@@ -13,7 +13,7 @@ from youtube_dl import YoutubeDL
 
 class MusicPlayer():
 
-    __slots__ = ('bot', '_guild', '_channel', '_cog', 'pq', 'next_song', 'title', 'value', 'source', 'current', 'np', 'volume')
+    __slots__ = ('bot', '_guild', '_channel', '_cog', 'pq', 'next_song', 'value', 'source', 'current', 'np', 'volume')
 
     def __init__(self, ctx):
         self.bot = ctx.bot
@@ -23,7 +23,6 @@ class MusicPlayer():
 
         self.pq = pqdict()
         self.next_song = asyncio.Event()
-        self.title = list()
 
         self.value = -1
         self.source = None
@@ -65,7 +64,6 @@ class MusicPlayer():
             self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next_song.set))
             self.np = await self._channel.send('Tocando agora: {a} - Pedido por: <@{b}>'.format(a=source.title, b=source.requester.id))
 
-            self.title.remove(source.title)
             for k,v in self.pq.items():
                 if v > 1:
                     self.pq.updateitem(k, v-1)

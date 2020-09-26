@@ -5,7 +5,8 @@ import asyncio
 import itertools
 import sys
 import traceback
-import heapq
+import random
+from pqdict import nsmallest
 from cogs.music_player import MusicPlayer
 from ytdlsource import YTDLSource
 from async_timeout import timeout
@@ -89,8 +90,11 @@ class Music(commands.Cog):
         # If download is True, source will be a discord.FFmpegPCMAudio with a VolumeTransformer.
         source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop, download=True)
 
-        player.title.append(source.title)
-
+        for t in player.pq.items():
+            if source.title == t[0].title:
+                return await ctx.send('O aúdio já está na fila')
+            else:
+                continue
 
         player.value = player.value + 1
         player.pq.additem(source, player.value)
@@ -99,7 +103,7 @@ class Music(commands.Cog):
         await ctx.message.add_reaction('✅')
         await ctx.send(f'```ini\n[Added {source.title} to the Queue]\n```', delete_after=30)
 
-    @commands.command(name='pula', help='Pula para a próxima música na fila', aliases=['skip'])
+    @commands.command(name='pula', help='Pula para a próxima música na fila')
     async def skip_(self, ctx):
 
         try:
@@ -112,7 +116,7 @@ class Music(commands.Cog):
         voice = discord.utils.get(self.bot.voice_clients, guild=ctx.guild)
         if voice.is_playing() and len(player.pq) > 0:
             voice.stop()
-            await ctx.message.add_reaction('✅')
+            await ctx.message.add_reaction('⏭️')
         else:
             await ctx.send('Não há nenhum aúdio na fila', delete_after=10)
 
@@ -162,9 +166,9 @@ class Music(commands.Cog):
         if len(player.pq) == 0:
             return await ctx.send('Não há nenhuma música na fila', delete_after=20)
 
-        upcoming = list(itertools.islice(player.title, 0, 50))
+        upcoming = nsmallest(len(player.pq), player.pq)
 
-        fmt = '\n'.join([f'{i+1} - {item}' for i, item in enumerate(upcoming)])
+        fmt = '\n'.join([f'{i + 1} - {key.title}' for i, key in enumerate(upcoming)])
 
         embed = discord.Embed(title=f'Próximas {len(upcoming)} músicas', description=fmt)
 
@@ -231,17 +235,13 @@ class Music(commands.Cog):
 
         player = self.get_player(ctx)
 
-        if index > 0 :
-            try:
-                await ctx.send('O aúdio {} foi removido da fila'.format(player.title[index-1]))
+        try:
+            audio = [k for k,v in player.pq.items() if v == index]
 
-                player.title.pop(index-1)
-                audio = [k for k,v in player.pq.items() if v == index]
+            await ctx.send('O aúdio {} foi removido da fila'.format(audio[0].title))
 
-                del player.pq[audio[0]]
-            except IndexError:
-                return await ctx.send('O aúdio não está na fila', delete_after=10)
-        else:
+            del player.pq[audio[0]]
+        except IndexError:
             return await ctx.send('O aúdio não está na fila', delete_after=10)
 
         for k,v in player.pq.items():
@@ -266,11 +266,57 @@ class Music(commands.Cog):
 
         player = self.get_player(ctx)
 
-        player.title.clear()
         player.pq.clear()
         player.value = 0
 
         await ctx.send('Todas os aúdios da fila foram removidos', delete_after=5)
+
+    @commands.command(name='jump', help='Pula para um aúdio específico da fila', aliases=['j'])
+    async def jump_(self, ctx, index : int):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
+        player = self.get_player(ctx)
+
+        try:
+            audio = [k for k,v in player.pq.items() if v == index]
+            player.pq.updateitem(audio[0], 0)
+        except IndexError:
+            return await ctx.send('O aúdio especificado não está na fila')
+
+        for k,v in player.pq.items():
+            if v < index and v > 1:
+                player.pq.updateitem(k, v+1)
+            else:
+                continue
+
+        await Music.skip_(self, ctx)
+
+    @commands.command(name='shuffle', help='Randomiza os itens da fila')
+    async def shuffle_(self, ctx):
+
+        try:
+            channel = ctx.message.author.voice.channel
+        except:
+            return await ctx.send('Você não está conectado a nenhum canal de voz', delete_after=10)
+
+        player = self.get_player(ctx)
+
+        values = [v for k,v in player.pq.items()]
+        new_values = random.sample(values, k=len(values))
+        items = [player.pq.popitem() for _ in range(len(values))]
+        print(new_values)
+
+
+        for item in items:
+            new_value = new_values.pop()
+            player.pq.additem(item[0], new_value)
+            player.pq.heapify(item[0])
+
+        await ctx.message.add_reaction('🔀')
 
 def setup(bot):
     bot.add_cog(Music(bot))
