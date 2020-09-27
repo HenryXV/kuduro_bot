@@ -63,7 +63,7 @@ class MusicPlayer():
             source.volume = self.volume
             self.current = source
 
-            print(source.title)
+            print(source.title, self._guild.name)
 
             opus = ctypes.util.find_library('opus')
             discord.opus.load_opus(opus)

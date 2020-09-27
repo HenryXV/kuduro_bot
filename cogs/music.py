@@ -98,7 +98,6 @@ class Music(commands.Cog):
 
         player.value = player.value + 1
         player.pq.additem(source, player.value)
-        print(player.value)
 
         await ctx.message.add_reaction('✅')
         await ctx.send(f'```ini\n[Added {source.title} to the Queue]\n```', delete_after=30)
