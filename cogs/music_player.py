@@ -47,7 +47,7 @@ class MusicPlayer():
                 else:
                     source = self.pq.pop()
             except KeyError:
-                await self._channel.send('Não há nenhum aúdio na fila, então vou me desconectar. Use o comando !play para tocar mais músicas', delete_after=15)
+                await self._channel.send('There is no audio on the queue, so I will disconnect from the channel. Use the command !play or !p to queue more audios', delete_after=15)
                 return self.destroy(self._guild)
 
             if not isinstance(source, YTDLSource):
@@ -71,7 +71,7 @@ class MusicPlayer():
                 raise RunTimeError('Opus failed to load')
 
             self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next_song.set))
-            self.np = await self._channel.send('Tocando agora: {a} - Pedido por: <@{b}>'.format(a=source.title, b=source.requester.id))
+            self.np = await self._channel.send('Playing now: {a} - Requested by: <@{b}>'.format(a=source.title, b=source.requester.id))
 
             for k,v in self.pq.items():
                 if v > 1:
