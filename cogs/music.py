@@ -62,7 +62,7 @@ class Music(commands.Cog):
 
         return player
 
-    @commands.command(name='join', help='Connects the bot to your current channel)
+    @commands.command(name='join', help='Connects the bot to your current channel')
     async def join(self, ctx):
 
         try:
