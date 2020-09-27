@@ -63,11 +63,18 @@ class MusicPlayer():
             source.volume = self.volume
             self.current = source
 
+<<<<<<< HEAD
             opus = ctypes.util.find_library('opus')
             discord.opus.load_opus(opus)
             if not discord.opus.is_loaded():
                 raise RunTimeError('Opus failed to load')
 
+=======
+            discord.opus.load_opus()
+            if not discord.opus.is_loaded():
+                raise RunTimeError('Opus failed to load')
+                
+>>>>>>> 498ee6f269efe5311e0caec5b3587800c60c358e
             self._guild.voice_client.play(source, after=lambda _: self.bot.loop.call_soon_threadsafe(self.next_song.set))
             self.np = await self._channel.send('Tocando agora: {a} - Pedido por: <@{b}>'.format(a=source.title, b=source.requester.id))
 
