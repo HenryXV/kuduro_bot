@@ -63,6 +63,8 @@ class MusicPlayer():
             source.volume = self.volume
             self.current = source
 
+            print(source.title)
+
             opus = ctypes.util.find_library('opus')
             discord.opus.load_opus(opus)
             if not discord.opus.is_loaded():
@@ -77,8 +79,6 @@ class MusicPlayer():
 
             if self.value > 1:
                 self.value = self.value - 1
-            print(self.value)
-            print(self.pq)
 
             await self.next_song.wait()
 
