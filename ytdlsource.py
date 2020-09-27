@@ -43,8 +43,14 @@ class YTDLSource(discord.PCMVolumeTransformer):
         # YTDL info dicts (data) have other useful information you might want
         # https://github.com/rg3/youtube-dl/blob/master/README.md
 
+    def __getitem__(self, item: str):
+        # Allows us to access attributes similar to a dict.
+        # This is only useful when you are NOT downloading.
+        #
+        return self.__getattribute__(item)
+
     @classmethod
-    async def create_source(cls, ctx, search: str, *, loop, download=True):
+    async def create_source(cls, ctx, search: str, *, loop, download=False):
         loop = loop or asyncio.get_event_loop()
 
         to_run = partial(ytdl.extract_info, url=search, download=download)
@@ -60,3 +66,15 @@ class YTDLSource(discord.PCMVolumeTransformer):
             return {'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']}
 
         return cls(discord.FFmpegPCMAudio(source), data=data, requester=ctx.author)
+
+    @classmethod
+    async def regather_stream(cls, data, *, loop):
+        # Used for preparing a stream, instead of downloading.
+        # Since Youtube Streaming links expire.
+        loop = loop or asyncio.get_event_loop()
+        requester = data['requester']
+
+        to_run = partial(ytdl.extract_info, url=data['webpage_url'], download=False)
+        data = await loop.run_in_executor(None, to_run)
+
+        return cls(discord.FFmpegPCMAudio(data['url']), data=data, requester=requester)
