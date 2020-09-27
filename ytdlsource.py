@@ -67,6 +67,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
 
         return cls(discord.FFmpegPCMAudio(source), data=data, requester=ctx.author)
 
+<<<<<<< HEAD
     @classmethod
     async def regather_stream(cls, data, *, loop):
         # Used for preparing a stream, instead of downloading.
@@ -78,3 +79,16 @@ class YTDLSource(discord.PCMVolumeTransformer):
         data = await loop.run_in_executor(None, to_run)
 
         return cls(discord.FFmpegPCMAudio(data['url']), data=data, requester=requester)
+=======
+     @classmethod
+        async def regather_stream(cls, data, *, loop):
+            # Used for preparing a stream, instead of downloading.
+            # Since Youtube Streaming links expire.
+            loop = loop or asyncio.get_event_loop()
+            requester = data['requester']
+
+            to_run = partial(ytdl.extract_info, url=data['webpage_url'], download=False)
+            data = await loop.run_in_executor(None, to_run)
+
+            return cls(discord.FFmpegPCMAudio(data['url']), data=data, requester=requester)
+>>>>>>> bc46b5a068c257ba54ea09fb7545e941e5aee8c9
