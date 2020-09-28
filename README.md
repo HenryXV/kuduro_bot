@@ -2,6 +2,10 @@
 This is a music dicord bot to be used in discord servers, the bot is able to join your voice channel and play any audio from youtube, by searching or the URL.
 It also has a queue that you can add more and more audios!
 
+# Add the bot to your server
+
+https://discord.com/api/oauth2/authorize?client_id=757432703128698960&permissions=37223488&scope=bot
+
 # Commands
 
 Commands currently implemented:
