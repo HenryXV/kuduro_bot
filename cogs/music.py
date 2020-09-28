@@ -173,7 +173,7 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name='playing_now', help='Mostra a música tocando no momento', aliases=['pn', 'now', 'currentaudio', 'playing'])
+    @commands.command(name='playing_now', help='Shows the current audio playing', aliases=['pn', 'now', 'currentaudio', 'playing'])
     async def now_playing_(self, ctx):
 
         try:
