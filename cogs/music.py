@@ -253,7 +253,6 @@ class Music(commands.Cog):
 
         if player.value > 0:
             player.value = player.value - 1
-        print(player.pq.values())
 
     @commands.command(name='clear', help='Deletes all audios from the queue')
     async def clear_(self, ctx):
@@ -307,8 +306,6 @@ class Music(commands.Cog):
         values = [v for k,v in player.pq.items()]
         new_values = random.sample(values, k=len(values))
         items = [player.pq.popitem() for _ in range(len(values))]
-        print(new_values)
-
 
         for item in items:
             new_value = new_values.pop()
