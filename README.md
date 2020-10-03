@@ -4,7 +4,7 @@ It also has a queue that you can add more and more audios!
 
 # Add the bot to your server
 
-https://discord.com/api/oauth2/authorize?client_id=757432703128698960&permissions=37223488&scope=bot
+https://discord.com/api/oauth2/authorize?client_id=757432703128698960&permissions=34622528&redirect_uri=https%3A%2F%2Fdiscord.com%2Fapi%2Foauth2%2Fauthorize%3Fclient_id%3D757432703128698960%26permissions%3D37223488%26scope%3Dbot&scope=bot
 
 # Commands
 
