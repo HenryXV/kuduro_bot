@@ -37,8 +37,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         super().__init__(source)
         self.requester = requester
 
-        self.title = data.get('title')
         self.web_url = data.get('webpage_url')
+        self.title = data.get('title')
+        self.duration = data.get('duration')
 
         # YTDL info dicts (data) have other useful information you might want
         # https://github.com/rg3/youtube-dl/blob/master/README.md
@@ -63,9 +64,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if download:
             source = ytdl.prepare_filename(data)
         else:
-            return {'webpage_url': data['webpage_url'], 'requester': ctx.author, 'title': data['title']}
+            return {'webpage_url': data['webpage_url'], 'requester': ctx, 'title': data['title'], 'duration': data['duration']}
 
-        return cls(discord.FFmpegPCMAudio(source), data=data, requester=ctx.author)
+        return cls(discord.FFmpegPCMAudio(source), data=data, requester=ctx)
 
     @classmethod
     async def regather_stream(cls, data, *, loop):
