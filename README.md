@@ -28,13 +28,28 @@ Commands currently implemented:
 
 !stop -> destroy the player, queue and custom changes made
 
-!remove -> [track position] deletes the audio specified
+!remove -> [track position or audio name] deletes the audio specified
+
+!remove_range [start] [end] -> removes tracks position from start to end (inclusive) Ex: !remove_range 1 6
 
 !clear -> deletes all audios from queue
 
-!jump -> [track position] skips to specified audio
+!jump -> [track position or audio name] skips to specified audio
 
 !shuffle -> randomizes all audios in the queue
+
+!save_playlist [name] -> saves your current queue with the specified name
+
+!view_playlists -> view all your saved playlists
+
+!load_playlist [name] -> loads a playlist with the specified name
+
+!delete_playlist [name] -> deletes the playlist with the specified name
+
+!loop_queue -> loops through the queue when it ends
+
+!loop_queue_stop -> stop looping through the queue
+
 
 !help -> It will show similar explatination of these commands!
 
